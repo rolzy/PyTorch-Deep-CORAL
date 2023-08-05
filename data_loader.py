@@ -23,7 +23,7 @@ def get_loader(name_dataset, batch_size, train=True):
     }
 
     data_transform = transforms.Compose([
-            transforms.Scale(224),
+            transforms.Resize(224),
             transforms.ToTensor(),
             transforms.Normalize(mean=mean_std[name_dataset]['mean'],
                                  std=mean_std[name_dataset]['std'])
