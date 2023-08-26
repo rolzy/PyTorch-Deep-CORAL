@@ -1,15 +1,23 @@
-from torchvision.models import alexnet
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 from tqdm import tqdm
 import argparse
+from torchvision.models import alexnet
 
 from data_loader import get_loader
 from utils import accuracy, Tracker
 from coral import coral
+import logging
 
+try:
+    from sagemaker_inference import environment
+except:
+    from sagemaker_training import environment
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def train(model, optimizer, source_loader, target_loader, tracker, args, epoch=0):
 
@@ -82,6 +90,44 @@ def main():
     # base learning rate to 10−3, weight decay to 5×10−4, and momentum to 0.9
 
     parser = argparse.ArgumentParser(description='Train - Evaluate DeepCORAL model')
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=2,
+        metavar="W",
+        help="number of data loading workers (default: 2)",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=2,
+        metavar="E",
+        help="number of total epochs to run (default: 2)",
+    )
+    parser.add_argument(
+        "--batch_size", type=int, default=4, metavar="BS", help="batch size (default: 4)"
+    )
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=0.001,
+        metavar="LR",
+        help="initial learning rate (default: 0.001)",
+    )
+    parser.add_argument(
+        "--momentum", type=float, default=0.9, metavar="M", help="momentum (default: 0.9)"
+    )
+    parser.add_argument(
+        "--dist_backend", type=str, default="gloo", help="distributed backend (default: gloo)"
+    )
+
+    env = environment.Environment()
+    parser.add_argument("--hosts", type=list, default=env.hosts)
+    parser.add_argument("--current-host", type=str, default=env.current_host)
+    parser.add_argument("--model-dir", type=str, default=env.model_dir)
+    parser.add_argument("--data-dir", type=str, default=env.channel_input_dirs.get("training"))
+    parser.add_argument("--num-gpus", type=int, default=env.num_gpus)
+
     parser.add_argument('--disable_cuda', action='store_true',
                         help='Disable CUDA')
     parser.add_argument('--epochs', type=int, default=50,

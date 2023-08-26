@@ -1,0 +1,6 @@
+__pycache__/
+data/
+log.pth
+logs/
+office31.tar.gz
+env/
